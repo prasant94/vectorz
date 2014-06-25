@@ -22,6 +22,7 @@ import java.util.Random;
 
 import mikera.matrixx.AMatrix;
 import mikera.matrixx.Matrix;
+import mikera.matrixx.decompose.impl.eigen.EigenvalueSmall;
 
 
 /**
@@ -613,10 +614,10 @@ public class SvdImplicitQrAlgorithm {
         }
 
         // return the eigenvalue closest to a22
-        double diff0 = Math.abs(eigenSmall.value0-a22);
-        double diff1 = Math.abs(eigenSmall.value1-a22);
+        double diff0 = Math.abs(eigenSmall.value0.x-a22);
+        double diff1 = Math.abs(eigenSmall.value1.x-a22);
 
-        return diff0 < diff1 ? eigenSmall.value0 :  eigenSmall.value1;
+        return diff0 < diff1 ? eigenSmall.value0.x :  eigenSmall.value1.x;
     }
 
     /**
@@ -647,9 +648,9 @@ public class SvdImplicitQrAlgorithm {
         eigenSmall.symm2x2_fast(b11*b11, b11*b12 , b12*b12+b22*b22);
 
         off[x1] = 0;
-        diag[x1] = scale*Math.sqrt(eigenSmall.value0);
-        double sgn = Math.signum(eigenSmall.value1);
-        diag[x1+1] = sgn*scale*Math.sqrt(Math.abs(eigenSmall.value1));
+        diag[x1] = scale*Math.sqrt(eigenSmall.value0.x);
+        double sgn = Math.signum(eigenSmall.value1.x);
+        diag[x1+1] = sgn*scale*Math.sqrt(Math.abs(eigenSmall.value1.x));
 
     }
 
@@ -877,35 +878,4 @@ public class SvdImplicitQrAlgorithm {
         return maxValue;
     }
     
-    /**
-     * @author Peter Abeles
-     */
-    public class EigenvalueSmall {
-    	
-        public double value0;
-        public double value1;
-
-        /**
-         * Compute the symmetric eigenvalue using a slightly safer technique
-         */
-        // See page 385 of Fundamentals of Matrix Computations 2nd
-        public void symm2x2_fast( double a11 , double a12, double a22 )
-        {
-//            double p = (a11 - a22)*0.5;
-//            double r = Math.sqrt(p*p + a12*a12);
-    //
-//            value0.real = a22 + a12*a12/(r-p);
-//            value1.real = a22 - a12*a12/(r+p);
-//        }
-    //
-//        public void symm2x2_std( double a11 , double a12, double a22 )
-//        {
-            double left  = (a11+a22)*0.5;
-            double b     = (a11-a22)*0.5;
-            double right = Math.sqrt(b*b+a12*a12);
-            value0 = left + right;
-            value1 = left - right;
-        }
-
-    }
 }
