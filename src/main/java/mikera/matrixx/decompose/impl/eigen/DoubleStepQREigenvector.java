@@ -22,6 +22,7 @@ import mikera.matrixx.AMatrix;
 import mikera.matrixx.Matrix;
 import mikera.matrixx.algo.Multiplications;
 import mikera.matrixx.solve.impl.TriangularSolver;
+import mikera.matrixx.solve.impl.lu.LUSolver;
 import mikera.vectorz.Vector;
 import mikera.vectorz.Vector2;
 
@@ -42,7 +43,7 @@ public class DoubleStepQREigenvector {
 
     Vector eigenvectorTemp;
 
-    LinearSolver solver;
+    LUSolver solver;
 
     Vector2 origEigenvalues[];
     int N;
@@ -67,7 +68,7 @@ public class DoubleStepQREigenvector {
             eigenvectors = new Vector[N];
             eigenvectorTemp = Vector.createLength(N);
 
-            solver = LinearSolverFactory.linear(0);
+            solver = new LUSolver();
         } else {
 //            UtilEjml.setnull(eigenvectors);
             eigenvectors = new Vector[N];
@@ -196,9 +197,11 @@ public class DoubleStepQREigenvector {
         
         r.multiply(-1);
         // TODO this must be very inefficient
-        if( !solver.setA(A))
+        if( solver.setA(A) == null)
             throw new RuntimeException("Solve failed");
-        solver.solve(r,r);
+        Matrix temp = Matrix.create(r.length(),1);
+        temp.setElements(r.asDoubleArray());
+        r = Vector.create(solver.solve(temp).asDoubleArray());
     }
 
     public boolean findQandR() {
