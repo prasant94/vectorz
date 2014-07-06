@@ -5,11 +5,14 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Random;
 
 import mikera.arrayz.INDArray;
 import mikera.indexz.Index;
 import mikera.matrixx.impl.ADiagonalMatrix;
+import mikera.matrixx.impl.AStridedMatrix;
 import mikera.matrixx.impl.ColumnMatrix;
+import mikera.matrixx.impl.DenseColumnMatrix;
 import mikera.matrixx.impl.DiagonalMatrix;
 import mikera.matrixx.impl.IdentityMatrix;
 import mikera.matrixx.impl.ScalarMatrix;
@@ -296,10 +299,22 @@ public class Matrixx {
 		fillRandomValues(m);
 		return m;
 	}
+	
+	public static Matrix createRandomSquareMatrix(int dimensions, Random rand) {
+		Matrix m = createSquareMatrix(dimensions);
+		fillRandomValues(m,rand);
+		return m;
+	}
 
 	public static AMatrix createRandomMatrix(int rows, int columns) {
 		AMatrix m = newMatrix(rows, columns);
 		fillRandomValues(m);
+		return m;
+	}
+	
+	public static AMatrix createRandomMatrix(int rows, int columns, Random rand) {
+		AMatrix m = newMatrix(rows, columns);
+		fillRandomValues(m,rand);
 		return m;
 	}
 
@@ -419,20 +434,34 @@ public class Matrixx {
 		int rows = m.rowCount();
 		int columns = m.columnCount();
 		AMatrix result = newMatrix(rows, columns);
-		for (int i = 0; i < rows; i++) {
-			for (int j = 0; j < columns; j++) {
-				result.unsafeSet(i, j, m.get(i, j));
-			}
-		}
+		result.set(m);
 		return result;
 	}
 
+	/**
+	 * Fills a matrix with uniform random numbers
+	 * @param m
+	 */
 	public static void fillRandomValues(AMatrix m) {
 		int rows = m.rowCount();
 		int columns = m.columnCount();
 		for (int i = 0; i < rows; i++) {
 			for (int j = 0; j < columns; j++) {
 				m.unsafeSet(i, j, Rand.nextDouble());
+			}
+		}
+	}
+	
+	/**
+	 * Fills a matrix with uniform random numbers, using the specified Random instance
+	 * @param m
+	 */
+	public static void fillRandomValues(AMatrix m, Random rand) {
+		int rows = m.rowCount();
+		int columns = m.columnCount();
+		for (int i = 0; i < rows; i++) {
+			for (int j = 0; j < columns; j++) {
+				m.unsafeSet(i, j, rand.nextDouble());
 			}
 		}
 	}
@@ -501,24 +530,29 @@ public class Matrixx {
 	}
 
 	/**
-	 * Wraps double[] data in a strided matrix
+	 * Wraps double[] data in a strided matrix of the most efficient available type.
+	 * 
 	 * @param array
 	 * @param arrayOffset
 	 * @param reverse
 	 * @param reverse2
 	 * @return
 	 */
-	public static AMatrix wrapStrided(double[] data, int rows, int cols, int offset, int rowStride, int colStride) {
-		if (offset==0) {
-			if ((cols==rowStride)&&(colStride==1)&&(data.length==rows*cols)) {
+	public static AStridedMatrix wrapStrided(double[] data, int rows, int cols, int offset, int rowStride, int colStride) {
+		if ((offset==0)&&(data.length==rows*cols)) {
+			if ((rows<=1)||(cols<=1)||((cols==rowStride)&&(colStride==1))) {
 				return Matrix.wrap(rows, cols, data);
+			} 
+			if ((rows==colStride)&&(rowStride==1)) {
+				return DenseColumnMatrix.wrap(rows, cols, data);
 			} 
 		}
 		return StridedMatrix.wrap(data, rows, cols, offset, rowStride, colStride);
 	}
 
-	public static AMatrix createSparse(List<INDArray> slices) {
-		int cc=slices.get(0).sliceCount();
+	public static AMatrix createSparse(Iterable<INDArray> slices) {
+		INDArray slice1=slices.iterator().next();
+		int cc=slice1.sliceCount();
 		ArrayList<AVector> al=new ArrayList<AVector>();
 		for (INDArray a:slices) {
 			if ((a.dimensionality()!=1)||(a.sliceCount()!=cc)) throw new IllegalArgumentException(ErrorMessages.incompatibleShape(a)); 

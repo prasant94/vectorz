@@ -9,10 +9,10 @@ import mikera.vectorz.util.DoubleArrays;
 import mikera.vectorz.util.ErrorMessages;
 
 /**
- * Matrix class that wraps a vector as a 1-row matrix
+ * Matrix class that wraps a vector as a single-row matrix
  * @author Mike
  */
-public class RowMatrix extends AMatrix implements IFastRows {
+public class RowMatrix extends AMatrix implements IFastColumns, IFastRows {
 	private static final long serialVersionUID = 2636365975400418264L;
 
 	private final AVector vector;
@@ -73,6 +73,11 @@ public class RowMatrix extends AMatrix implements IFastRows {
 	@Override 
 	public double elementSum() {
 		return vector.elementSum();
+	}
+	
+	@Override 
+	public double elementSquaredSum() {
+		return vector.elementSquaredSum();
 	}
 	
 	@Override 

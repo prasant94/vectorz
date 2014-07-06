@@ -10,6 +10,7 @@ import java.util.Map.Entry;
 import mikera.arrayz.ISparse;
 import mikera.matrixx.AMatrix;
 import mikera.matrixx.Matrixx;
+import mikera.matrixx.Matrix;
 import mikera.vectorz.AVector;
 import mikera.vectorz.Op;
 import mikera.vectorz.Vector;
@@ -82,12 +83,19 @@ public class SparseRowMatrix extends ASparseRCMatrix implements ISparse,
 
 	public static SparseRowMatrix create(AVector... rows) {
 		int rc = rows.length;
-		int cc = rows[0].length();
-		for (int i = 1; i < rc; i++) {
-			if (rows[i].length() != cc)
-				throw new IllegalArgumentException(
-						"Mismatched column count at row: " + i);
+		int cc = -1;
+		for (int i = 0; i < rc; i++) {
+			AVector r=rows[i];
+			if (r==null) continue;
+			if (cc<0) {
+				cc=r.length();
+			} else {
+				if (r.length() != cc)
+					throw new IllegalArgumentException(
+							"Mismatched column count at row: " + i);
+			}
 		}
+		if (cc==-1) {throw new IllegalArgumentException("All rows are null!");}
 		return new SparseRowMatrix(rows.clone(), rc, cc);
 	}
 	
@@ -106,7 +114,10 @@ public class SparseRowMatrix extends ASparseRCMatrix implements ISparse,
 	@Override
 	public AVector getRow(int i) {
 		AVector v = data.get(i);
-		if (v == null) return emptyRow;
+		if (v == null) {
+			if ((i<0)||(i>=rows)) throw new IndexOutOfBoundsException("Row: " + i);
+			return emptyRow;
+		}
 		return v;
 	}
 	
@@ -264,11 +275,11 @@ public class SparseRowMatrix extends ASparseRCMatrix implements ISparse,
 		if (a instanceof SparseColumnMatrix) {
 			return innerProduct((SparseColumnMatrix) a);
 		}
-		AMatrix r = Matrixx.createSparse(rows, a.columnCount());
+		AMatrix r = Matrix.create(rows, a.columnCount());
 
 		for (Entry<Integer, AVector> eRow : data.entrySet()) {
 			int i = eRow.getKey();
-			r.replaceRow(i,getRow(i).innerProduct(a));
+			r.setRow(i,getRow(i).innerProduct(a));
 		}
 		return r;
 	}
@@ -288,7 +299,7 @@ public class SparseRowMatrix extends ASparseRCMatrix implements ISparse,
 	}
 	
 	@Override
-	public AMatrix innerProduct(double a) {
+	public AMatrix multiplyCopy(double a) {
 		HashMap<Integer,AVector> ndata=new HashMap<Integer,AVector>();
 		for (Entry<Integer, AVector> eRow : data.entrySet()) {
 			ndata.put(eRow.getKey(), eRow.getValue().innerProduct(a));
@@ -340,13 +351,7 @@ public class SparseRowMatrix extends ASparseRCMatrix implements ISparse,
 
 	@Override
 	public double get(int i, int j) {
-		if ((i < 0) || (i >= rows))
-			throw new IndexOutOfBoundsException(ErrorMessages.invalidIndex(
-					this, i, j));
-		if ((j < 0) || (j >= cols))
-			throw new IndexOutOfBoundsException(ErrorMessages.invalidIndex(
-					this, i, j));
-		return unsafeGet(i, j);
+		return getRow(i).get(j);
 	}
 
 	@Override
@@ -359,9 +364,7 @@ public class SparseRowMatrix extends ASparseRCMatrix implements ISparse,
 
 	@Override
 	public void set(int i, int j, double value) {
-		if ((i < 0) || (i >= rows))
-			throw new IndexOutOfBoundsException(ErrorMessages.invalidIndex(
-					this, i, j));
+		checkIndex(i,j);
 		Integer io = i;
 		AVector v = data.get(io);
 		if (v == null) {

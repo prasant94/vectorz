@@ -10,19 +10,29 @@ import mikera.vectorz.util.ErrorMessages;
 
 public final class Inverse {
 
-	/*
-	 * Computes the inverse of an arbitrary Matrix
+	/**
+	 * Computes the inverse of an arbitrary square Matrix.
+	 * 
+	 * Throws an exception if the matrix is not square
+	 * 
+	 * Returns null if the matrix cannot be inverted
 	 */
 	public static AMatrix calculate(AMatrix a) {
-		int rc=a.rowCount(); 
-		if (rc!=a.columnCount()) throw new IllegalArgumentException(ErrorMessages.nonSquareMatrix(a));
+		int rc=a.checkSquare();
 		
 		if (rc<=3) return calculateSmall(a,rc);
 		
 		return createLUPInverse(a);
 	}
 	
-	public static AMatrix calculateSmall(AMatrix m, int rc) {
+	/**
+	 * Computes the inverse of a symmetric matrix
+	 */
+	public static AMatrix calculateSymmetric(AMatrix a) {
+		return calculate(a);
+	}
+	
+	private static AMatrix calculateSmall(AMatrix m, int rc) {
 		if (rc==1) return new Matrix11(m).inverse();
 		if (rc==2) return new Matrix22(m).inverse();
 		if (rc==3) return new Matrix33(m).inverse();
