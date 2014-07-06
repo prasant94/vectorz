@@ -82,14 +82,14 @@ public class DoubleStepQREigen {
 
     public boolean createR = true;
 
-    public Matrix Q;
+    public AMatrix Q;
 
     public void incrementSteps() {
         steps++;
     }
 
     public void setQ( AMatrix Q ) {
-        this.Q = Q.copy().toMatrix();
+        this.Q = Q;
     }
 
     private void addEigenvalue( double v ) {
@@ -285,7 +285,7 @@ public class DoubleStepQREigen {
 
         // get rid of the bump
         if( Q != null ) {
-            QRHelperFunctions.rank1UpdateMultR(Q,u.asDoubleArray(),gamma,0,x1,x1+3,_temp.asDoubleArray());
+            QRHelperFunctions.rank1UpdateMultR(Q.toMatrix(),u.asDoubleArray(),gamma,0,x1,x1+3,_temp.asDoubleArray());
             if( checkOrthogonal && !Q.isOrthogonal() ) {
                 System.out.println(u);
 
@@ -303,7 +303,7 @@ public class DoubleStepQREigen {
         // perform double steps
         for( int i = x1; i < x2-2; i++ ) {
             if( bulgeDoubleStepQn(i) && Q != null ) {
-                QRHelperFunctions.rank1UpdateMultR(Q,u.asDoubleArray(),gamma,0,i+1,i+4,_temp.asDoubleArray());
+                QRHelperFunctions.rank1UpdateMultR(Q.toMatrix(),u.asDoubleArray(),gamma,0,i+1,i+4,_temp.asDoubleArray());
                 if( checkOrthogonal && !Q.isOrthogonal() )
                     throw new RuntimeException("Bad");
             }
@@ -317,7 +317,7 @@ public class DoubleStepQREigen {
             System.out.println("removing last bump");
         // the last one has to be a single step
         if( x2-2 >= 0 && bulgeSingleStepQn(x2-2) && Q != null ) {
-            QRHelperFunctions.rank1UpdateMultR(Q,u.asDoubleArray(),gamma,0,x2-1,x2+1,_temp.asDoubleArray());
+            QRHelperFunctions.rank1UpdateMultR(Q.toMatrix(),u.asDoubleArray(),gamma,0,x2-1,x2+1,_temp.asDoubleArray());
             if( checkOrthogonal && !Q.isOrthogonal() )
                 throw new RuntimeException("Bad");
 
@@ -340,7 +340,7 @@ public class DoubleStepQREigen {
 
         // get rid of the bump
         if( Q != null ) {
-            QRHelperFunctions.rank1UpdateMultR(Q,u.asDoubleArray(),gamma,0,x1,x1+2,_temp.asDoubleArray());
+            QRHelperFunctions.rank1UpdateMultR(Q.toMatrix(),u.asDoubleArray(),gamma,0,x1,x1+2,_temp.asDoubleArray());
             if( checkOrthogonal && !Q.isOrthogonal() )
                 throw new RuntimeException("Bad");
         }
@@ -354,7 +354,7 @@ public class DoubleStepQREigen {
         // perform simple steps
         for( int i = x1; i < x2-1; i++ ) {
             if( bulgeSingleStepQn(i) && Q != null ) {
-                QRHelperFunctions.rank1UpdateMultR(Q,u.asDoubleArray(),gamma,0,i+1,i+3,_temp.asDoubleArray());
+                QRHelperFunctions.rank1UpdateMultR(Q.toMatrix(),u.asDoubleArray(),gamma,0,i+1,i+3,_temp.asDoubleArray());
                 if( checkOrthogonal && !Q.isOrthogonal() )
                     throw new RuntimeException("Bad");
             }
@@ -428,9 +428,9 @@ public class DoubleStepQREigen {
 
         double div = a11+tau;
 
-        u.set(i,0,1);
-        u.set(i+1,0,a21/div);
-        u.set(i+2,0,a31/div);
+        u.set(i,1);
+        u.set(i+1,a21/div);
+        u.set(i+2,a31/div);
 
         gamma = div/tau;
 
@@ -507,8 +507,8 @@ public class DoubleStepQREigen {
 
         double div = a11+tau;
 
-        u.set(i,0,1);
-        u.set(i+1,0,a21/div);
+        u.set(i,1);
+        u.set(i+1,a21/div);
 
         gamma = div/tau;
 
