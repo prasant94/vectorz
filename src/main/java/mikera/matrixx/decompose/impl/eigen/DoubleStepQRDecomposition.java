@@ -91,7 +91,7 @@ public class DoubleStepQRDecomposition {
         return algValue.getEigenvalues()[index];
     }
 
-    public AVector getEigenVector(int index) {
+    public AMatrix getEigenVector(int index) {
         return algVector.getEigenvectors()[index];
     }
 }

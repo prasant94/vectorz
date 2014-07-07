@@ -18,7 +18,9 @@
 
 package mikera.matrixx.decompose.impl.eigen;
 
+import mikera.matrixx.AMatrix;
 import mikera.matrixx.Matrix;
+import mikera.matrixx.algo.Multiplications;
 import mikera.matrixx.solve.impl.TriangularSolver;
 import mikera.matrixx.solve.impl.lu.LUSolver;
 import mikera.vectorz.Vector2;
@@ -27,6 +29,8 @@ import mikera.vectorz.Vector2;
  * @author Peter Abeles
  */
 public class DoubleStepQREigenvector {
+    
+    public static double EPS = Math.pow(2,-52);
 
     DoubleStepQREigen implicit;
 
@@ -51,7 +55,7 @@ public class DoubleStepQREigenvector {
     int indexVal;
     boolean onscript;
 
-    public boolean process( DoubleStepQREigen implicit , Matrix A , Matrix Q_h )
+    public boolean process( DoubleStepQREigen implicit , AMatrix A , AMatrix Q_h )
     {
         this.implicit = implicit;
 
@@ -84,9 +88,10 @@ public class DoubleStepQREigenvector {
         return extractVectors(Q_h);
     }
 
-    public boolean extractVectors( Matrix Q_h ) {
+    public boolean extractVectors( AMatrix Q_h ) {
 
-        UtilEjml.memset(eigenvectorTemp.data,0);
+//        UtilEjml.memset(eigenvectorTemp.data,0);
+        eigenvectorTemp.set(0);
         // extract eigenvectors from the shur matrix
         // start at the top left corner of the matrix
         boolean triangular = true;
@@ -109,7 +114,8 @@ public class DoubleStepQREigenvector {
                 Matrix v = eigenvectors[i];
 
                 if( v != null ) {
-                    CommonOps.mult(Q_h,v,temp);
+//                    CommonOps.mult(Q_h,v,temp);
+                    temp = Multiplications.multiply(Q_h, v);
                     eigenvectors[i] = temp;
                     temp = v;
                 }
@@ -124,8 +130,8 @@ public class DoubleStepQREigenvector {
         double scale = Math.abs(real);
         if( scale == 0 ) scale = 1;
 
-        eigenvectorTemp.reshape(N,1, false);
-        eigenvectorTemp.zero();
+        eigenvectorTemp.reshape(N,1);
+        eigenvectorTemp.fill(0);
 
         if( first > 0 ) {
             if( isTriangle ) {
@@ -135,18 +141,20 @@ public class DoubleStepQREigenvector {
             }
         }
 
-        eigenvectorTemp.reshape(N,1, false);
+        eigenvectorTemp.reshape(N,1);
 
         for( int i = first; i < N; i++ ) {
             Vector2 c = implicit.eigenvalues[N-i-1];
 
-            if( (c.y==0) && Math.abs(c.x-real)/scale < 100.0*UtilEjml.EPS ) {
+            if( (c.y==0) && Math.abs(c.x-real)/scale < 100.0*EPS ) {
                 eigenvectorTemp.data[i] = 1;
 
                 Matrix v = Matrix.create(N,1);
-                CommonOps.multTransA(Q,eigenvectorTemp,v);
+//                CommonOps.multTransA(Q,eigenvectorTemp,v);
+                v = Multiplications.multiply(Q, eigenvectorTemp);
                 eigenvectors[N-i-1] = v;
-                NormOps.normalizeF(v);
+//                NormOps.normalizeF(v);
+                v.divide(Math.sqrt(v.elementSquaredSum()));
 
                 eigenvectorTemp.data[i] = 0;
             }
@@ -155,32 +163,39 @@ public class DoubleStepQREigenvector {
 
     private void solveUsingTriangle(double real, int index, Matrix r ) {
         for( int i = 0; i < index; i++ ) {
-            implicit.A.add(i,i,-real);
+            implicit.A.addAt(i,i,-real);
         }
 
-        SpecializedOps.subvector(implicit.A,0,index,index,false,0,r);
-        CommonOps.changeSign(r);
+//        SpecializedOps.subvector(implicit.A,0,index,index,false,0,r);
+        AMatrix sub = implicit.A.subArray(new int[] {0, index}, new int[] {index, 1});
+        r.set(sub.reshape(r.rowCount(), r.columnCount()));
+//        CommonOps.changeSign(r);
+        r.multiply(-1);
 
         TriangularSolver.solveU(implicit.A.data,r.data,implicit.A.rowCount(),0,index);
 
         for( int i = 0; i < index; i++ ) {
-            implicit.A.add(i,i,real);
+            implicit.A.addAt(i,i,real);
         }
     }
 
     private void solveWithLU(double real, int index, Matrix r ) {
-        Matrix A = Matrix.create(index,index);
+//        Matrix A = Matrix.create(index,index);
 
-        CommonOps.extract(implicit.A,0,index,0,index,A,0,0);
+//        CommonOps.extract(implicit.A,0,index,0,index,A,0,0);
+        AMatrix A = implicit.A.subMatrix(0, index, 0, index);
 
         for( int i = 0; i < index; i++ ) {
-            A.add(i,i,-real);
+            A.addAt(i,i,-real);
         }
 
-        r.reshape(index,1, false);
+        r.reshape(index,1);
 
-        SpecializedOps.subvector(implicit.A,0,index,index,false,0,r);
-        CommonOps.changeSign(r);
+//        SpecializedOps.subvector(implicit.A,0,index,index,false,0,r);
+        AMatrix sub = implicit.A.subArray(new int[] {0, index}, new int[] {index, 1});
+        r.set(sub.reshape(r.rowCount(), r.columnCount()));
+//      CommonOps.changeSign(r);
+        r.multiply(-1);
 
         // TODO this must be very inefficient
         if( solver.setA(A) == null)
