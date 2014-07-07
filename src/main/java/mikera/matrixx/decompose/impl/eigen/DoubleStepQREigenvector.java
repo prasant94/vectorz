@@ -151,7 +151,7 @@ public class DoubleStepQREigenvector {
 
                 Matrix v = Matrix.create(N,1);
 //                CommonOps.multTransA(Q,eigenvectorTemp,v);
-                v = Multiplications.multiply(Q, eigenvectorTemp);
+                v = Multiplications.multiply(Q.getTranspose(), eigenvectorTemp);
                 eigenvectors[N-i-1] = v;
 //                NormOps.normalizeF(v);
                 v.divide(Math.sqrt(v.elementSquaredSum()));
