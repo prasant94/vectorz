@@ -76,7 +76,6 @@ public class DoubleStepQRDecomposition {
 //        }
 
         algValue.getImplicitQR().createR = true;
-
         if( computeVectors )
             return algVector.process(algValue.getImplicitQR(), H, hessenbergResult.getQ());
         else

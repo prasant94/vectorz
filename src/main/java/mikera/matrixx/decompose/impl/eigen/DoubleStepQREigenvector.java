@@ -205,7 +205,7 @@ public class DoubleStepQREigenvector {
 
     public boolean findQandR() {
 //        CommonOps.setIdentity(Q);
-        Q = Matrix.createIdentity(Q.rowCount(), Q.columnCount());
+        Q.setElements(Matrix.createIdentity(Q.rowCount(), Q.columnCount()).data);
 
         x1 = 0;
         x2 = N-1;
