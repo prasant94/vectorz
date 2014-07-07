@@ -49,10 +49,10 @@ public class DoubleStepQREigen {
     private int N;
 
     Matrix A;
-    private Vector u;
+    private AMatrix u;
     private double gamma;
 
-    private Vector _temp;
+    private AMatrix _temp;
 
     // how many steps did it take to find the eigenvalue
     int numStepsFind[];
@@ -134,9 +134,9 @@ public class DoubleStepQREigen {
             N = A.rowCount();
 
             this.A = A.copy().toMatrix();
-            u = Vector.createLength(A.rowCount());
+            u = Matrix.create(A.rowCount(), 1);
 
-            _temp = Vector.createLength(A.rowCount());
+            _temp = Matrix.create(A.rowCount(), 1);
             numStepsFind = new int[ A.rowCount() ];
         } else {
             this.A.set(A);
@@ -428,9 +428,9 @@ public class DoubleStepQREigen {
 
         double div = a11+tau;
 
-        u.set(i,1);
-        u.set(i+1,a21/div);
-        u.set(i+2,a31/div);
+        u.set(i,0,1);
+        u.set(i+1,0,a21/div);
+        u.set(i+2,0,a31/div);
 
         gamma = div/tau;
 
@@ -507,8 +507,8 @@ public class DoubleStepQREigen {
 
         double div = a11+tau;
 
-        u.set(i,1);
-        u.set(i+1,a21/div);
+        u.set(i,0,1);
+        u.set(i+1,0,a21/div);
 
         gamma = div/tau;
 
