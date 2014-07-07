@@ -18,20 +18,15 @@
 
 package mikera.matrixx.decompose.impl.eigen;
 
-import mikera.matrixx.AMatrix;
 import mikera.matrixx.Matrix;
-import mikera.matrixx.algo.Multiplications;
 import mikera.matrixx.solve.impl.TriangularSolver;
 import mikera.matrixx.solve.impl.lu.LUSolver;
-import mikera.vectorz.Vector;
 import mikera.vectorz.Vector2;
 
 /**
  * @author Peter Abeles
  */
 public class DoubleStepQREigenvector {
-	
-    public static double EPS = Math.pow(2,-52);
 
     DoubleStepQREigen implicit;
 
@@ -39,9 +34,9 @@ public class DoubleStepQREigenvector {
     Matrix Q;
 
 
-    Vector eigenvectors[];
+    Matrix eigenvectors[];
 
-    Vector eigenvectorTemp;
+    Matrix eigenvectorTemp;
 
     LUSolver solver;
 
@@ -56,7 +51,7 @@ public class DoubleStepQREigenvector {
     int indexVal;
     boolean onscript;
 
-    public boolean process( DoubleStepQREigen implicit , AMatrix A , AMatrix Q_h )
+    public boolean process( DoubleStepQREigen implicit , Matrix A , Matrix Q_h )
     {
         this.implicit = implicit;
 
@@ -65,13 +60,13 @@ public class DoubleStepQREigenvector {
             Q = Matrix.create(N,N);
             splits = new int[N];
             origEigenvalues = new Vector2[N];
-            eigenvectors = new Vector[N];
-            eigenvectorTemp = Vector.createLength(N);
+            eigenvectors = new Matrix[N];
+            eigenvectorTemp = Matrix.create(N,1);
 
             solver = new LUSolver();
         } else {
 //            UtilEjml.setnull(eigenvectors);
-            eigenvectors = new Vector[N];
+            eigenvectors = new Matrix[N];
         }
         System.arraycopy(implicit.eigenvalues,0,origEigenvalues,0,N);
 
@@ -89,9 +84,9 @@ public class DoubleStepQREigenvector {
         return extractVectors(Q_h);
     }
 
-    public boolean extractVectors( AMatrix Q_h ) {
+    public boolean extractVectors( Matrix Q_h ) {
 
-        eigenvectorTemp.set(0);
+        UtilEjml.memset(eigenvectorTemp.data,0);
         // extract eigenvectors from the shur matrix
         // start at the top left corner of the matrix
         boolean triangular = true;
@@ -99,23 +94,22 @@ public class DoubleStepQREigenvector {
 
             Vector2 c = implicit.eigenvalues[N-i-1];
 
-            if( triangular && !(c.y == 0) )
+            if( triangular && !(c.y==0) )
                 triangular = false;
 
-            if( (c.y == 0) && eigenvectors[N-i-1] == null) {
+            if( (c.y==0) && eigenvectors[N-i-1] == null) {
                 solveEigenvectorDuplicateEigenvalue(c.x,i,triangular);
             }
         }
 
         // translate the eigenvectors into the frame of the original matrix
         if( Q_h != null ) {
-            Vector temp = Vector.createLength(N);
+            Matrix temp = Matrix.create(N,1);
             for( int i = 0; i < N; i++ ) {
-                Vector v = eigenvectors[i];
+                Matrix v = eigenvectors[i];
 
                 if( v != null ) {
-                	temp = Multiplications.multiply(Q_h, vectorToTransposedMatrix(v)).toVector();
-//                    CommonOps.mult(Q_h,v,temp);
+                    CommonOps.mult(Q_h,v,temp);
                     eigenvectors[i] = temp;
                     temp = v;
                 }
@@ -125,13 +119,13 @@ public class DoubleStepQREigenvector {
         return true;
     }
 
-	private void solveEigenvectorDuplicateEigenvalue( double real , int first , boolean isTriangle ) {
+    private void solveEigenvectorDuplicateEigenvalue( double real , int first , boolean isTriangle ) {
 
         double scale = Math.abs(real);
         if( scale == 0 ) scale = 1;
 
-        eigenvectorTemp = eigenvectorTemp.reshape(N).toVector();
-        eigenvectorTemp.fill(0);
+        eigenvectorTemp.reshape(N,1, false);
+        eigenvectorTemp.zero();
 
         if( first > 0 ) {
             if( isTriangle ) {
@@ -141,72 +135,63 @@ public class DoubleStepQREigenvector {
             }
         }
 
-        eigenvectorTemp = eigenvectorTemp.reshape(N).toVector();
+        eigenvectorTemp.reshape(N,1, false);
 
         for( int i = first; i < N; i++ ) {
             Vector2 c = implicit.eigenvalues[N-i-1];
 
-            if( (c.y == 0) && Math.abs(c.x-real)/scale < 100.0*EPS ) {
-                eigenvectorTemp.set(i, 1);
+            if( (c.y==0) && Math.abs(c.x-real)/scale < 100.0*UtilEjml.EPS ) {
+                eigenvectorTemp.data[i] = 1;
 
-                Vector v = Vector.createLength(N);
-                v = Multiplications.multiply(Q, vectorToTransposedMatrix(eigenvectorTemp)).toVector();
-//                CommonOps.multTransA(Q,eigenvectorTemp,v);
+                Matrix v = Matrix.create(N,1);
+                CommonOps.multTransA(Q,eigenvectorTemp,v);
                 eigenvectors[N-i-1] = v;
-                v.divide(Math.sqrt(v.elementSquaredSum()));
-//                NormOps.normalizeF(v);
+                NormOps.normalizeF(v);
 
-                eigenvectorTemp.set(i, 0);
+                eigenvectorTemp.data[i] = 0;
             }
         }
     }
 
-    private void solveUsingTriangle(double real, int index, Vector r ) {
+    private void solveUsingTriangle(double real, int index, Matrix r ) {
         for( int i = 0; i < index; i++ ) {
-            implicit.A.addAt(i,i,-real);
+            implicit.A.add(i,i,-real);
         }
 
-//        SpecializedOps.subvector(implicit.A,0,index,index,false,0,r);
-        Vector sub = implicit.A.subArray(new int[] {0, index}, new int[] {index, 1}).toVector();
-        r.set(Vector.createFromVector(sub, r.length()));
-        
-        r.multiply(-1);
-        TriangularSolver.solveU(implicit.A.data,r.asDoubleArray(),implicit.A.rowCount(),0,index);
+        SpecializedOps.subvector(implicit.A,0,index,index,false,0,r);
+        CommonOps.changeSign(r);
+
+        TriangularSolver.solveU(implicit.A.data,r.data,implicit.A.rowCount(),0,index);
 
         for( int i = 0; i < index; i++ ) {
-            implicit.A.addAt(i,i,real);
+            implicit.A.add(i,i,real);
         }
     }
 
-    private void solveWithLU(double real, int index, Vector r ) {
-//        Matrix A = Matrix.create(index,index);
+    private void solveWithLU(double real, int index, Matrix r ) {
+        Matrix A = Matrix.create(index,index);
 
-//        CommonOps.extract(implicit.A,0,index,0,index,A,0,0);
-        Matrix A = implicit.A.subMatrix(0, index, 0, index).toMatrix();
+        CommonOps.extract(implicit.A,0,index,0,index,A,0,0);
 
         for( int i = 0; i < index; i++ ) {
-            A.addAt(i,i,-real);
+            A.add(i,i,-real);
         }
 
-        r = r.reshape(index).toVector();
-        
+        r.reshape(index,1, false);
 
-//        SpecializedOps.subvector(implicit.A,0,index,index,false,0,r);
-        Vector sub = implicit.A.subArray(new int[] {0, index}, new int[] {index, 1}).toVector();
-        r.set(Vector.createFromVector(sub, r.length()));
-        
-        r.multiply(-1);
+        SpecializedOps.subvector(implicit.A,0,index,index,false,0,r);
+        CommonOps.changeSign(r);
+
         // TODO this must be very inefficient
         if( solver.setA(A) == null)
             throw new RuntimeException("Solve failed");
-        Matrix temp = Matrix.create(r.length(),1);
-        temp.setElements(r.asDoubleArray());
-        r = Vector.create(solver.solve(temp).asDoubleArray());
+        r.set(solver.solve(r));
     }
 
     public boolean findQandR() {
 //        CommonOps.setIdentity(Q);
-    	Q = Matrix.createIdentity(Q.rowCount());
+        Q = Matrix.createIdentity(Q.rowCount(), Q.columnCount());
+
         x1 = 0;
         x2 = N-1;
 
@@ -281,7 +266,7 @@ public class DoubleStepQREigenvector {
                 Vector2 a = origEigenvalues[indexVal];
 
                 // if no splits are found perform an implicit step
-                if( a.y == 0 ) {
+                if( a.y==0 ) {
                     implicit.performImplicitSingleStep(x1,x2, a.x);
                 } else if( x2 < N-2 ) {
                     implicit.performImplicitDoubleStep(x1,x2, a.x,a.y);
@@ -320,19 +305,11 @@ public class DoubleStepQREigenvector {
         return implicit;
     }
 
-    public Vector[] getEigenvectors() {
+    public Matrix[] getEigenvectors() {
         return eigenvectors;
     }
 
     public Vector2[] getEigenvalues() {
         return implicit.eigenvalues;
     }
-
-    private Matrix vectorToTransposedMatrix(Vector v) {
-    	Matrix m = Matrix.create(v.length(), 1);
-    	m.setElements(v.toDoubleArray());
-		return m;
-	}
-    
-    
 }

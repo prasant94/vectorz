@@ -70,7 +70,7 @@ public class DoubleStepQRDecomposition {
 
         if( !algValue.process(H) )
             return false;
-
+        
 //        for( int i = 0; i < A.numRows; i++ ) {
 //            System.out.println(algValue.getEigenvalues()[i]);
 //        }
