@@ -19,6 +19,7 @@
 package mikera.matrixx.decompose.impl.eigen;
 
 import mikera.matrixx.AMatrix;
+import mikera.matrixx.decompose.IEigenResult;
 import mikera.matrixx.decompose.impl.hessenberg.HessenbergResult;
 import mikera.matrixx.decompose.impl.hessenberg.HessenbergSimilarDecomposition;
 import mikera.vectorz.AVector;
@@ -50,6 +51,10 @@ public class DoubleStepQRDecomposition {
     // should it compute eigenvectors or just eigenvalues
     boolean computeVectors;
 
+    public DoubleStepQRDecomposition() {
+        this(true);
+    }
+    
     public DoubleStepQRDecomposition( boolean computeVectors ) {
         algValue = new DoubleStepQREigenvalue();
         algVector = new DoubleStepQREigenvector();
@@ -57,11 +62,11 @@ public class DoubleStepQRDecomposition {
         this.computeVectors = computeVectors;
     }
 
-    public boolean decompose(AMatrix A) {
+    public EigenResult _decompose(AMatrix A) {
 
         hessenbergResult = HessenbergSimilarDecomposition.decompose(A);
         if( hessenbergResult == null )
-            return false;
+            return null;
 
         H = hessenbergResult.getH();
 
@@ -69,17 +74,21 @@ public class DoubleStepQRDecomposition {
 //        algValue.getImplicitQR().setChecks(true,true,true);
 
         if( !algValue.process(H) )
-            return false;
+            return null;
         
 //        for( int i = 0; i < A.numRows; i++ ) {
 //            System.out.println(algValue.getEigenvalues()[i]);
 //        }
 
         algValue.getImplicitQR().createR = true;
-        if( computeVectors )
-            return algVector.process(algValue.getImplicitQR(), H, hessenbergResult.getQ());
+        if( computeVectors ) {
+            if (algVector.process(algValue.getImplicitQR(), H, hessenbergResult.getQ()))
+                return new EigenResult(algValue.getEigenvalues());
+            else
+                return null;
+        }
         else
-            return true;
+            return new EigenResult(algValue.getEigenvalues(), null);
     }
 
     public int getNumberOfEigenvalues() {
@@ -92,5 +101,10 @@ public class DoubleStepQRDecomposition {
 
     public AMatrix getEigenVector(int index) {
         return algVector.getEigenvectors()[index];
+    }
+
+    public static EigenResult decompose(AMatrix a, boolean computeVectors) {
+        DoubleStepQRDecomposition alg = new DoubleStepQRDecomposition(computeVectors);
+        return alg._decompose(a);
     }
 }
