@@ -504,7 +504,7 @@ public class TestDoubleStepQRDecomposition {
                 off++;
             else {
                 for( int j = 0; j < N; j++ ) {
-                    A.set(i-off,j,v.get(j));
+                    A.set(i-off,j,v.get(j,0));
                 }
             }
         }
