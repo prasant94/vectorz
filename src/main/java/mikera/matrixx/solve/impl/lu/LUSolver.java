@@ -82,7 +82,7 @@ public class LUSolver {
         }
     }
     
-    public ADenseArrayMatrix solve(AMatrix b) {
+    public AMatrix solve(AMatrix b) {
         if( b.rowCount() != numCols )
             throw new IllegalArgumentException("Unexpected matrix size");
         if(Math.abs(result.computeDeterminant()) < 1e-10)

@@ -130,7 +130,7 @@ public class DoubleStepQREigenvector {
         double scale = Math.abs(real);
         if( scale == 0 ) scale = 1;
 
-        eigenvectorTemp.reshape(N,1);
+        eigenvectorTemp = eigenvectorTemp.reshape(N,1);
         eigenvectorTemp.fill(0);
 
         if( first > 0 ) {
@@ -141,7 +141,7 @@ public class DoubleStepQREigenvector {
             }
         }
 
-        eigenvectorTemp.reshape(N,1);
+        eigenvectorTemp = eigenvectorTemp.reshape(N,1);
 
         for( int i = first; i < N; i++ ) {
             Vector2 c = implicit.eigenvalues[N-i-1];
@@ -189,7 +189,8 @@ public class DoubleStepQREigenvector {
             A.addAt(i,i,-real);
         }
 
-        r.reshape(index,1);
+        eigenvectorTemp = r.reshape(index,1);
+        r = eigenvectorTemp;
 
 //        SpecializedOps.subvector(implicit.A,0,index,index,false,0,r);
         AMatrix sub = implicit.A.subArray(new int[] {0, index}, new int[] {index, 1});
