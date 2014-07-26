@@ -331,6 +331,11 @@ public final class JoinedVector extends AJoinedVector {
 	}
 	
 	@Override
+	public AVector absCopy() {
+		return left.absCopy().join(right.absCopy());
+	}
+	
+	@Override
 	public void exp() {
 		left.exp();
 		right.exp();
@@ -346,6 +351,11 @@ public final class JoinedVector extends AJoinedVector {
 	public void negate() {
 		left.negate();
 		right.negate();
+	}
+	
+	@Override
+	public AVector negateCopy() {
+		return left.negateCopy().join(right.negateCopy());
 	}
 	
 	@Override
@@ -418,10 +428,15 @@ public final class JoinedVector extends AJoinedVector {
 	}
 	
 	@Override
-	public void setElements(double[] values, int offset, int length) {
-		checkLength(length);
-		left.setElements(values,offset,split);
-		right.setElements(values,offset+split,length-split);
+	public void setElements(int pos, double[] values, int offset, int length) {
+		int l0=Math.min(length, (split-pos));
+		if (l0>0) {
+			left.setElements(pos,values,offset,l0);
+		}
+		int l1=Math.min(length, pos+length-split);
+		if (l1>0) {
+			right.setElements(pos+length-split-l1,values,offset+split,l1);
+		}
 	}
 
 	@Override
@@ -529,6 +544,21 @@ public final class JoinedVector extends AJoinedVector {
 	public void validate() {
 		if (left.tryEfficientJoin(right)!=null) throw new VectorzException("Should have used efficient join!");
 		super.validate();
+	}
+
+	@Override
+	public int segmentCount() {
+		return 2;
+	}
+
+	@Override
+	public AVector getSegment(int k) {
+		return (k<=0)?left:right;
+	}
+
+	@Override
+	protected JoinedVector reconstruct(AVector... segments) {
+		return new JoinedVector(segments[0],segments[1]);
 	}
 
 }

@@ -1,6 +1,5 @@
 package mikera.matrixx.impl;
 
-import mikera.matrixx.AMatrix;
 import mikera.matrixx.Matrix;
 import mikera.vectorz.AVector;
 import mikera.vectorz.Op;
@@ -12,28 +11,18 @@ import mikera.vectorz.util.ErrorMessages;
  * 
  * @author Mike
  */
-public class ColumnMatrix extends AMatrix implements IFastColumns, IFastRows {
+public class ColumnMatrix extends ARectangularMatrix implements IFastColumns, IFastRows {
 	private static final long serialVersionUID = -6040718921619985258L;
 
 	private final AVector vector;
 	
 	public ColumnMatrix(AVector v) {
+		super(v.length(),1);
 		vector=v;
 	}
 	
 	public static ColumnMatrix wrap(AVector v) {
 		return new ColumnMatrix(v);
-	}
-
-
-	@Override
-	public int rowCount() {
-		return vector.length();
-	}
-
-	@Override
-	public int columnCount() {
-		return 1;
 	}
 	
 	@Override
@@ -179,5 +168,28 @@ public class ColumnMatrix extends AMatrix implements IFastColumns, IFastRows {
 		Vector v=vector.innerProduct(s).toVector();
 		return Matrix.wrap(1, s.columnCount(), v.asDoubleArray());
 	}
+	
+	@Override
+	public boolean hasUncountable() {
+	    return vector.hasUncountable();
+	}
+	
+	/**
+     * Returns the sum of all the elements raised to a specified power
+     * @return
+     */
+    @Override
+    public double elementPowSum(double p) {
+        return vector.elementPowSum(p);
+    }
+    
+    /**
+     * Returns the sum of the absolute values of all the elements raised to a specified power
+     * @return
+     */
+    @Override
+    public double elementAbsPowSum(double p) {
+        return vector.elementAbsPowSum(p);
+    }
 
 }

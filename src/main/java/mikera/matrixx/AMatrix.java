@@ -32,6 +32,7 @@ import mikera.matrixx.impl.MatrixRowView;
 import mikera.matrixx.impl.MatrixAsVector;
 import mikera.matrixx.impl.TransposedMatrix;
 import mikera.matrixx.impl.VectorMatrixMN;
+import mikera.matrixx.impl.ZeroMatrix;
 import mikera.randomz.Hash;
 import mikera.transformz.AAffineTransform;
 import mikera.transformz.AffineMN;
@@ -388,11 +389,12 @@ public abstract class AMatrix extends AbstractArray<AVector> implements IMatrix 
 	}	
 	
 	public AMatrix subMatrix(int rowStart, int rows, int colStart, int cols) {
-		VectorMatrixMN vm=new VectorMatrixMN(0,cols);
+		if ((rows==0)||(cols==0)) return ZeroMatrix.create(rows, cols);
+		AVector[] vs=new AVector[rows];
 		for (int i=0; i<rows; i++) {
-			vm.appendRow(this.getRowView(rowStart+i).subVector(colStart, cols));
+			vs[i]=this.getRowView(rowStart+i).subVector(colStart, cols);
 		}
-		return vm;	
+		return VectorMatrixMN.wrap(vs);	
 	}
 	
 	@Override
@@ -577,19 +579,6 @@ public abstract class AMatrix extends AbstractArray<AVector> implements IMatrix 
 	}
 	
 	@Override
-	public void setElements(double[] values, int offset, int length) {
-		if (length!=elementCount()) {
-			throw new IllegalArgumentException("Incorrect element count: "+length);
-		}
-		int rc = rowCount();
-		int cc = columnCount();
-		for (int i = 0; i < rc; i++) {
-			int iOffset=offset+i*cc;
-			getRowView(i).setElements(values,iOffset);
-		}	
-	} 
-	
-	@Override
 	public void getElements(double[] dest, int offset) {
 		int rc=this.rowCount();
 		int cc=this.columnCount();
@@ -604,8 +593,19 @@ public abstract class AMatrix extends AbstractArray<AVector> implements IMatrix 
 	}
 	
 	@Override
-	public void setElements(double[] values) {
-		setElements(values,0,values.length);
+	public void setElements(double... values) {
+		int vl=values.length;
+		if (vl!=elementCount()) throw new IllegalArgumentException("Incorrect number of elements in array: "+vl);
+		setElements(values,0);
+	}
+	
+	@Override
+	public void setElements(double[] values, int offset) {
+		int rc=rowCount();
+		int cc=columnCount();
+		for (int i=0; i<rc; i++) {
+			slice(i).setElements(values,offset+i*cc);
+		}
 	}
 
 	@Override
@@ -2076,5 +2076,4 @@ public abstract class AMatrix extends AbstractArray<AVector> implements IMatrix 
 			throw new IndexOutOfBoundsException(ErrorMessages.invalidIndex(this, i,j));
 		}
 	}
-	
 }

@@ -127,9 +127,9 @@ public abstract class ADenseArrayVector extends AStridedVector implements IDense
 	}
 
 	@Override
-	public void setElements(double[] values, int offset, int length) {
-		assert (length == this.length());
-		System.arraycopy(values, offset, getArray(), getArrayOffset(), length);
+	public void setElements(int pos,double[] values, int offset, int length) {
+		checkRange(pos,length);
+		System.arraycopy(values, offset, getArray(), getArrayOffset()+pos, length);
 	}
 
 	@Override
@@ -313,7 +313,7 @@ public abstract class ADenseArrayVector extends AStridedVector implements IDense
 
 	@Override
 	public void addAt(int i, double v) {
-		assert ((i >= 0) && (i < length()));
+		assert ((i >= 0) && (i < length())); // just an assert since this is unchecked
 		double[] data = getArray();
 		int offset = getArrayOffset();
 		data[i + offset] += v;
@@ -360,6 +360,16 @@ public abstract class ADenseArrayVector extends AStridedVector implements IDense
 	@Override
 	public double elementSum() {
 		return DoubleArrays.elementSum(getArray(), getArrayOffset(), length());
+	}
+	
+	@Override
+	public double elementPowSum(double exponent) {
+		return DoubleArrays.elementPowSum(getArray(), getArrayOffset(), length(),exponent);
+	}
+	
+	@Override
+	public double elementAbsPowSum(double exponent) {
+		return DoubleArrays.elementAbsPowSum(getArray(), getArrayOffset(), length(),exponent);
 	}
 	
 	@Override
@@ -470,15 +480,7 @@ public abstract class ADenseArrayVector extends AStridedVector implements IDense
 
 	@Override
 	public void copyTo(int start, AVector dest, int destOffset, int length) {
-		if (dest instanceof ADenseArrayVector) {
-			copyTo(start, (ADenseArrayVector) dest, destOffset, length);
-			return;
-		}
-		double[] src = getArray();
-		int off = getArrayOffset();
-		for (int i = 0; i < length; i++) {
-			dest.unsafeSet(destOffset + i, src[off + start + i]);
-		}
+		dest.setElements(destOffset, getArray(), getArrayOffset()+start, length);
 	}
 
 	public void copyTo(int offset, ADenseArrayVector dest, int destOffset, int length) {

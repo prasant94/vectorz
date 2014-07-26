@@ -109,8 +109,7 @@ public abstract class AVector extends AbstractArray<Double> implements IVector, 
 	}
 	
 	@Override
-	public double get(int... indexes) {
-		if (indexes.length!=1) throw new IllegalArgumentException(ErrorMessages.invalidIndex(this, indexes));
+	public final double get(int... indexes) {
 		return get(indexes[0]);
 	}
 	
@@ -639,6 +638,13 @@ public abstract class AVector extends AbstractArray<Double> implements IVector, 
 	}
 	
 	@Override
+	public AVector absCopy() {
+		AVector v=clone();
+		v.abs();
+		return v;
+	}
+	
+	@Override
 	public void log() {
 		int len=length();
 		for (int i=0; i<len; i++) {
@@ -845,6 +851,8 @@ public abstract class AVector extends AbstractArray<Double> implements IVector, 
 	/**
 	 * Returns the dot product of this vector with another vector
 	 * 
+	 * The vectors must have the same length: if not the result is undefined
+	 * 
 	 * @param v
 	 * @return
 	 */
@@ -896,14 +904,7 @@ public abstract class AVector extends AbstractArray<Double> implements IVector, 
 	 * 
 	 * Likely to be faster than other dot product operations
 	 */
-	public double dotProduct(double[] data, int offset) {
-		int len=length();
-		double result=0.0;
-		for (int i=0; i<len; i++) {
-			result+=unsafeGet(i)*data[offset+i];
-		}
-		return result;
-	}
+	public abstract double dotProduct(double[] data, int offset);
 	
 	/**
 	 * Computes the crossProduct of this vector with another vector, and stores the result in this vector.
@@ -1143,6 +1144,28 @@ public abstract class AVector extends AbstractArray<Double> implements IVector, 
 		return magnitudeSquared();
 	}
 	
+	@Override
+	public double elementPowSum(double exponent) {
+		int n=length();
+		double result=0.0;
+		for (int i=0; i<n; i++) {
+			double x=unsafeGet(i);
+			result+=Math.pow(x,exponent);
+		}
+		return result;
+	}
+	
+	@Override
+	public double elementAbsPowSum(double exponent) {
+		int n=length();
+		double result=0.0;
+		for (int i=0; i<n; i++) {
+			double x=Math.abs(unsafeGet(i));
+			result+=Math.pow(x,exponent);
+		}
+		return result;
+	}
+	
 	/**
 	 * Returns the Euclidean angle between this vector and another vector
 	 * @return angle in radians
@@ -1235,17 +1258,18 @@ public abstract class AVector extends AbstractArray<Double> implements IVector, 
 	
 	@Deprecated
 	public void set(double[] data) {
-		setElements(data,0,length());
+		setElements(data);
 	}
 	
 	@Override
-	public void setElements(double[] data) {
-		setElements(data,0,length());
+	public void setElements(double... data) {
+		checkLength(data.length);
+		setElements(data,0);
 	}
 	
 	@Override
 	public void setElements(double[] data,int offset) {
-		setElements(data,offset,length());
+		setElements(0,data,offset,length());
 	}
 	
 	@Override
@@ -1262,12 +1286,10 @@ public abstract class AVector extends AbstractArray<Double> implements IVector, 
 	}
 	
 	@Override
-	public void setElements(double[] values, int offset, int length) {
-		if (length!=length()) {
-			throw new IllegalArgumentException("Incorrect length: "+length);
-		}
+	public void setElements(int pos,double[] values, int offset, int length) {
+		checkRange(pos,length);
 		for (int i=0; i<length; i++) {
-			unsafeSet(i,values[offset+i]);
+			unsafeSet(i+pos,values[offset+i]);
 		}
 	}
 	
@@ -1285,14 +1307,6 @@ public abstract class AVector extends AbstractArray<Double> implements IVector, 
 		for (int i=0; i<len; i++) {
 			unsafeSet(i,src.unsafeGet(srcOffset+i));
 		}
-	}
-	
-	public void setValues(double... values) {
-		int len=length();
-		if (values.length!=len) throw new VectorzException("Trying to set vectors with incorrect number of doubles: "+values.length);
-		for (int i=0; i<len; i++) {
-			unsafeSet(i,values[i]);
-		}		
 	}
 	
 	public long zeroCount() {
@@ -2021,6 +2035,13 @@ public abstract class AVector extends AbstractArray<Double> implements IVector, 
 		for (int i=0; i<len; i++) {
 			unsafeSet(i,op.apply(unsafeGet(i)));
 		}
+	}
+	
+	@Override
+	public AVector applyOpCopy(Op op) {
+		AVector r=clone();
+		r.applyOp(op);
+		return r;
 	}
 	
 	/**

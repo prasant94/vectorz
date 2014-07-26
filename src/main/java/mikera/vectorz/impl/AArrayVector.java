@@ -4,6 +4,10 @@ import mikera.vectorz.AScalar;
 
 /**
  * Base class for all vectors backed by a single final double[] array
+ * 
+ * Supports arbitrary indexing: array elements may not correspond to vector elements in any particular order. Ordering of elements is
+ * defined by subclasses of AArrayVector.
+ * 
  * @author Mike
  *
  */
