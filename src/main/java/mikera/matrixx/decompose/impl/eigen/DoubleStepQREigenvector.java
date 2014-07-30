@@ -95,6 +95,7 @@ public class DoubleStepQREigenvector {
         // extract eigenvectors from the shur matrix
         // start at the top left corner of the matrix
         boolean triangular = true;
+        
         for( int i = 0; i < N; i++ ) {
 
             Vector2 c = implicit.eigenvalues[N-i-1];
@@ -106,7 +107,7 @@ public class DoubleStepQREigenvector {
                 solveEigenvectorDuplicateEigenvalue(c.x,i,triangular);
             }
         }
-
+        
         // translate the eigenvectors into the frame of the original matrix
         if( Q_h != null ) {
             Matrix temp = Matrix.create(N,1);
@@ -121,7 +122,6 @@ public class DoubleStepQREigenvector {
                 }
             }
         }
-
         return true;
     }
 
@@ -157,8 +157,10 @@ public class DoubleStepQREigenvector {
                 v.divide(Math.sqrt(v.elementSquaredSum()));
 
                 eigenvectorTemp.data[i] = 0;
+                
             }
         }
+        
     }
 
     private void solveUsingTriangle(double real, int index, Matrix r ) {
@@ -189,8 +191,8 @@ public class DoubleStepQREigenvector {
             A.addAt(i,i,-real);
         }
 
-        eigenvectorTemp = r.reshape(index,1);
-        r = eigenvectorTemp;
+        r = r.reshape(index,1);
+        eigenvectorTemp = r;
 
 //        SpecializedOps.subvector(implicit.A,0,index,index,false,0,r);
         AMatrix sub = implicit.A.subArray(new int[] {0, index}, new int[] {index, 1});

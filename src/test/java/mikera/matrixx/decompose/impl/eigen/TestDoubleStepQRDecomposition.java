@@ -25,6 +25,7 @@ import mikera.matrixx.Matrix;
 import mikera.matrixx.Matrixx;
 import mikera.matrixx.algo.Multiplications;
 import mikera.matrixx.decompose.LUP;
+import mikera.matrixx.decompose.impl.lu.AltLU;
 import mikera.vectorz.Vector2;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.assertNotNull;
@@ -384,7 +385,7 @@ public class TestDoubleStepQRDecomposition {
                     Double.isInfinite(c.y) || Double.isNaN(c.y))
                 fail("Uncountable eigenvalue");
 
-            if( c.y!=0 ) {
+            if( Math.abs(c.y) > 1e-20 ) {
                 assertTrue(v==null);
             } else {
                 assertTrue(v != null );
@@ -406,6 +407,7 @@ public class TestDoubleStepQRDecomposition {
 
                 if( error > 1e-12 ) {
 //                    System.out.println("Original matrix:");
+//                    System.out.println(A);
 //                    A.print();
 //                    System.out.println("Eigenvalue = "+c.x);
 //                    Eigenpair p = EigenOps.computeEigenVector(A,c.real);
@@ -516,9 +518,9 @@ public class TestDoubleStepQRDecomposition {
 //        A.reshape(N-off,N, false);
         A = A.reshape(N-off, N);
         
-        boolean ans = Math.abs(LUP.decompose(A).computeDeterminant() - 0) < 1e-8;
-
-        assertTrue(ans);
+        AltLU lu = new AltLU();
+        lu._decompose(A);
+        assertFalse(lu.isSingular());
 //        assertTrue(MatrixFeatures.isRowsLinearIndependent(A));
     }
 
@@ -565,8 +567,7 @@ public class TestDoubleStepQRDecomposition {
     public void testForEigenvalue( DoubleStepQRDecomposition alg ,
                                    Matrix A,
                                    double valueReal ,
-                                   double valueImg , int numMatched )
-    {
+                                   double valueImg , int numMatched ) {
         int N = alg.getNumberOfEigenvalues();
 
         int numFound = 0;
