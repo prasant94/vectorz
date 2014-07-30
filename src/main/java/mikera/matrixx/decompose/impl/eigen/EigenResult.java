@@ -16,7 +16,7 @@ public class EigenResult implements IEigenResult {
         Matrix[] vectors = eigenVectors;
         this.eigenVectors  = new AVector[vectors.length];
         for(int i=0; i<eigenVectors.length; i++) {
-            this.eigenVectors[i] = Vector.create(vectors[i].asDoubleArray());
+            this.eigenVectors[i] = vectors[i] == null ? null : Vector.create(vectors[i].asDoubleArray());
         }
     }
 

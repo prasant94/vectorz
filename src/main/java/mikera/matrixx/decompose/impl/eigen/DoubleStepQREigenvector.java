@@ -201,7 +201,7 @@ public class DoubleStepQREigenvector {
         // TODO this must be very inefficient
         if( solver.setA(A) == null)
             throw new RuntimeException("Solve failed");
-        r.set(solver.solve(r));
+        r.set(solver.solveEigenHelper(r, 1e-30));
     }
 
     public boolean findQandR() {
