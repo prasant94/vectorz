@@ -53,13 +53,11 @@ public class TestDoubleStepQRDecomposition {
 
         checkRandom();
         checkKnownReal();
-//        checkKnownComplex();
+        checkKnownComplex();
         checkRandomSymmetric();
         checkExceptional();
         checkIdentity();
         checkAllZeros();
-//        checkSmallValue(false);
-        checkSmallValue(true);
         checkLargeValue(false);
         checkLargeValue(true);
     }
@@ -67,6 +65,7 @@ public class TestDoubleStepQRDecomposition {
     /**
      * Tests for when it just computes eigenvalues
      */
+    @Test
     public void justEigenValues() {
         computeVectors = false;
 
@@ -277,29 +276,6 @@ public class TestDoubleStepQRDecomposition {
 //            }
 //        }
 //    }
-
-    public void checkSmallValue( boolean symmetric) {
-
-//        System.out.println("Symmetric = "+symmetric);
-        DoubleStepQRDecomposition alg = createDecomposition();
-        
-        for( int i = 0; i < 20; i++ ) {
-            Matrix z = Matrix.createRandom(3, 3);
-            Matrix y = z.innerProduct(z.getTranspose());  // symmetric
-            Matrix A = symmetric ?
-                    y :
-                    Matrix.createRandom(4,4);
-
-//            CommonOps.scale(1e-200,A);
-            A.scale(1e-200);
-
-            assertNotNull(alg._decompose(A));
-
-//        A.print("%15.13e");
-
-            performStandardTests(alg,A,-1);
-        }
-    }
 
     public void checkLargeValue( boolean symmetric) {
 
@@ -560,7 +536,7 @@ public class TestDoubleStepQRDecomposition {
                             numMatched++;
                     } else {
                         numMatched++;
-                } else if( Math.abs(c.y-0) < 1e-8 ) {
+                } else if( Math.abs(c.y-0) > 1e-8 ) {
                     numMatched++;
                 }
             }
