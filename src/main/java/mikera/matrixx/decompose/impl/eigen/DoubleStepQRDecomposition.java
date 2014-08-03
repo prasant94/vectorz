@@ -88,7 +88,7 @@ public class DoubleStepQRDecomposition {
                 return null;
         }
         else
-            return new EigenResult(algValue.getEigenvalues(), null);
+            return new EigenResult(algValue.getEigenvalues());
     }
 
     public int getNumberOfEigenvalues() {
