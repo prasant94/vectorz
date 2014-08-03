@@ -65,16 +65,18 @@ public class DoubleStepQRDecomposition {
     public EigenResult _decompose(AMatrix A) {
 
         hessenbergResult = HessenbergSimilarDecomposition.decompose(A);
-        if( hessenbergResult == null )
+        if( hessenbergResult == null ) {
             return null;
+        }
 
         H = hessenbergResult.getH();
 
         algValue.getImplicitQR().createR = false;
 //        algValue.getImplicitQR().setChecks(true,true,true);
 
-        if( !algValue.process(H) )
+        if( !algValue.process(H) ) {
             return null;
+        }
         
 //        for( int i = 0; i < A.numRows; i++ ) {
 //            System.out.println(algValue.getEigenvalues()[i]);
@@ -84,8 +86,9 @@ public class DoubleStepQRDecomposition {
         if( computeVectors ) {
             if (algVector.process(algValue.getImplicitQR(), H, hessenbergResult.getQ()))
                 return new EigenResult(algValue.getEigenvalues(), algVector.getEigenvectors());
-            else
+            else {
                 return null;
+            }
         }
         else
             return new EigenResult(algValue.getEigenvalues());

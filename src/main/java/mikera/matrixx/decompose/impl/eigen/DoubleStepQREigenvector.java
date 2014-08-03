@@ -82,8 +82,9 @@ public class DoubleStepQREigenvector {
 //        System.out.println("Orig A");
 //        A.print("%12.10f");
 
-        if( !findQandR() )
+        if( !findQandR() ) {
             return false;
+        }
 
         return extractVectors(Q_h);
     }
