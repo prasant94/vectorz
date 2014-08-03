@@ -83,14 +83,14 @@ public class LUSolver {
     }
     
     public AMatrix solve(AMatrix b) {
-        return solveEigenHelper(b, 1e-12);
+        return solve(b, 1e-12);
     }
     
     /**
      * @param b
      * @return
      */
-    public AMatrix solveEigenHelper(AMatrix b, double threshold) {
+    public AMatrix solve(AMatrix b, double threshold) {
         if( b.rowCount() != numCols )
             throw new IllegalArgumentException("Unexpected matrix size");
         if(Math.abs(result.computeDeterminant()) < threshold)

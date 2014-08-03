@@ -185,8 +185,7 @@ public class DoubleStepQREigenvector {
 //        Matrix A = Matrix.create(index,index);
 
 //        CommonOps.extract(implicit.A,0,index,0,index,A,0,0);
-        AMatrix A = implicit.A.subMatrix(0, index, 0, index);
-
+        AMatrix A = Matrix.create(implicit.A.subMatrix(0, index, 0, index));
         for( int i = 0; i < index; i++ ) {
             A.addAt(i,i,-real);
         }
@@ -203,7 +202,7 @@ public class DoubleStepQREigenvector {
         // TODO this must be very inefficient
         if( solver.setA(A) == null)
             throw new RuntimeException("Solve failed");
-        r.set(solver.solveEigenHelper(r, 1e-30));
+        r.set(solver.solve(r, 1e-30));
     }
 
     public boolean findQandR() {
